@@ -246,7 +246,7 @@ logger = logging.getLogger(__name__)
 
 class ServerStartupError(Exception):
     pass
-    
+
 @pytest.fixture(scope="session")
 def fastapi_server():
     server_url = "http://127.0.0.1:8000/"
@@ -255,7 +255,7 @@ def fastapi_server():
     process = subprocess.Popen(
         [
             "uvicorn",
-            "app.main:app",   # change if your path is different
+            "main:app",   # change if your path is different
             "--host",
             "127.0.0.1",
             "--port",
