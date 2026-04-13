@@ -210,37 +210,85 @@ def seed_users(db_session: Session, request) -> List[User]:
 # ======================================================================================
 # FastAPI Server Fixture (Optional)
 # ======================================================================================
+# @pytest.fixture(scope="session")
+# def fastapi_server():
+#     """
+#     Start and manage a FastAPI test server, if needed for integration tests.
+#     """
+#     server_url = 'http://127.0.0.1:8000/'
+#     logger.info("Starting test server...")
+
+#     try:
+#         process = subprocess.Popen(
+#             ['python', 'main.py'],
+#             stdout=subprocess.PIPE,
+#             stderr=subprocess.PIPE
+#         )
+#         if not wait_for_server(server_url, timeout=30):
+#             raise ServerStartupError("Failed to start test server")
+
+#         logger.info("Test server started successfully.")
+#         yield  # Run all tests that depend on this fixture
+
+#     except Exception as e:
+#         logger.error(f"Server error: {str(e)}")
+#         raise
+#     finally:
+#         logger.info("Terminating test server...")
+#         process.terminate()
+#         try:
+#             process.wait(timeout=5)
+#             logger.info("Test server terminated gracefully.")
+#         except subprocess.TimeoutExpired:
+#             logger.warning("Test server did not terminate in time; killing it.")
+#             process.kill()
+logger = logging.getLogger(__name__)
+
+class ServerStartupError(Exception):
+    pass
+    
 @pytest.fixture(scope="session")
 def fastapi_server():
-    """
-    Start and manage a FastAPI test server, if needed for integration tests.
-    """
-    server_url = 'http://127.0.0.1:8000/'
-    logger.info("Starting test server...")
+    server_url = "http://127.0.0.1:8000/"
+    logger.info("Starting FastAPI test server...")
+
+    process = subprocess.Popen(
+        [
+            "uvicorn",
+            "app.main:app",   # change if your path is different
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000"
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
 
     try:
-        process = subprocess.Popen(
-            ['python', 'main.py'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        if not wait_for_server(server_url, timeout=30):
-            raise ServerStartupError("Failed to start test server")
+        # wait for server to start
+        for i in range(30):
+            try:
+                requests.get(server_url, timeout=2)
+                logger.info("Test server started successfully.")
+                break
+            except Exception:
+                time.sleep(1)
+        else:
+            stdout, stderr = process.communicate(timeout=5)
+            logger.error(stdout)
+            logger.error(stderr)
+            raise ServerStartupError("Failed to start FastAPI server")
 
-        logger.info("Test server started successfully.")
-        yield  # Run all tests that depend on this fixture
+        yield
 
-    except Exception as e:
-        logger.error(f"Server error: {str(e)}")
-        raise
     finally:
-        logger.info("Terminating test server...")
+        logger.info("Stopping test server...")
         process.terminate()
         try:
             process.wait(timeout=5)
-            logger.info("Test server terminated gracefully.")
         except subprocess.TimeoutExpired:
-            logger.warning("Test server did not terminate in time; killing it.")
             process.kill()
 
 # ======================================================================================
