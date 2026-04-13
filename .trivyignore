@@ -1,0 +1,2 @@
+CVE-2025-62727   # starlette (transitive via fastapi)
+CVE-2025-43859   # h11 (transitive)
