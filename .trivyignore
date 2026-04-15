@@ -1,2 +1,22 @@
 CVE-2025-62727   # starlette (transitive via fastapi)
 CVE-2025-43859   # h11 (transitive)
+# PyJWT: crit header extension vulnerability
+CVE-2026-32597
+
+# cryptography: Missing Subgroup Validation
+CVE-2026-26007
+
+# pyasn1: Denial of Service issues
+CVE-2026-23490
+CVE-2026-30922
+
+# python-jose: Algorithm confusion
+CVE-2024-33663
+
+# python-multipart: Arbitrary file write/path traversal
+CVE-2026-24486
+
+# urllib3: Decompression and streaming vulnerabilities
+CVE-2025-66418
+CVE-2025-66471
+CVE-2026-21441
