@@ -1,9 +1,5 @@
 # tests/conftest.py
 
-import os
-import sys
-import signal
-import pytest
 import subprocess
 import time
 import logging
@@ -214,72 +210,38 @@ def seed_users(db_session: Session, request) -> List[User]:
 # ======================================================================================
 # FastAPI Server Fixture (Optional)
 # ======================================================================================
-# @pytest.fixture(scope="session")
-# def fastapi_server():
-#     """
-#     Start and manage a FastAPI test server, if needed for integration tests.
-#     """
-#     server_url = 'http://127.0.0.1:8000/'
-#     logger.info("Starting test server...")
-
-#     try:
-#         process = subprocess.Popen(
-#             ['python', 'main.py'],
-#             stdout=subprocess.PIPE,
-#             stderr=subprocess.PIPE
-#         )
-#         if not wait_for_server(server_url, timeout=30):
-#             raise ServerStartupError("Failed to start test server")
-
-#         logger.info("Test server started successfully.")
-#         yield  # Run all tests that depend on this fixture
-
-#     except Exception as e:
-#         logger.error(f"Server error: {str(e)}")
-#         raise
-#     finally:
-#         logger.info("Terminating test server...")
-#         process.terminate()
-#         try:
-#             process.wait(timeout=5)
-#             logger.info("Test server terminated gracefully.")
-#         except subprocess.TimeoutExpired:
-#             logger.warning("Test server did not terminate in time; killing it.")
-#             process.kill()
-logger = logging.getLogger(__name__)
-
-class ServerStartupError(Exception):
-    pass
-
-# ======================================================================================
-# FastAPI Server Fixture (Optional)
-# ======================================================================================
 @pytest.fixture(scope="session")
 def fastapi_server():
+    """
+    Start and manage a FastAPI test server, if needed for integration tests.
+    """
     server_url = 'http://127.0.0.1:8000/'
-    
-    # 1. Use sys.executable to ensure the venv is used
-    # 2. Use DEVNULL to prevent the pipe from filling up and hanging
-    process = subprocess.Popen(
-        [sys.executable, 'main.py'],
-        stdout=subprocess.DEVNULL, 
-        stderr=subprocess.DEVNULL,
-        preexec_fn=os.setsid  # Creates a process group to kill workers later
-    )
+    logger.info("Starting test server...")
 
     try:
-        # Your wait_for_server logic here
+        process = subprocess.Popen(
+            ['python', 'main.py'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         if not wait_for_server(server_url, timeout=30):
-            raise Exception("Failed to start server")
-        yield 
-    finally:
-        # Kill the entire process group (parent + workers)
-        try:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-            process.wait(timeout=5)
-        except Exception:
-            process.kill()
+            raise ServerStartupError("Failed to start test server")
 
+        logger.info("Test server started successfully.")
+        yield  # Run all tests that depend on this fixture
+
+    except Exception as e:
+        logger.error(f"Server error: {str(e)}")
+        raise
+    finally:
+        logger.info("Terminating test server...")
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+            logger.info("Test server terminated gracefully.")
+        except subprocess.TimeoutExpired:
+            logger.warning("Test server did not terminate in time; killing it.")
+            process.kill()
 
 # ======================================================================================
 # Browser and Page Fixtures (Optional)
