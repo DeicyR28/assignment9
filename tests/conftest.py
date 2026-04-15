@@ -252,35 +252,28 @@ class ServerStartupError(Exception):
 # ======================================================================================
 @pytest.fixture(scope="session")
 def fastapi_server():
-    """
-    Start and manage a FastAPI test server, if needed for integration tests.
-    """
-    server_url = 'http://127.0.0.1:8000/'
-    logger.info("Starting test server...")
+    server_url = 'http://127.0.0'
+    
+    # 1. Use sys.executable to ensure the venv is used
+    # 2. Use DEVNULL to prevent the pipe from filling up and hanging
+    process = subprocess.Popen(
+        [sys.executable, 'main.py'],
+        stdout=subprocess.DEVNULL, 
+        stderr=subprocess.DEVNULL,
+        preexec_fn=os.setsid  # Creates a process group to kill workers later
+    )
 
     try:
-        process = subprocess.Popen(
-            ['python', 'main.py'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        # Your wait_for_server logic here
         if not wait_for_server(server_url, timeout=30):
-            raise ServerStartupError("Failed to start test server")
-
-        logger.info("Test server started successfully.")
-        yield  # Run all tests that depend on this fixture
-
-    except Exception as e:
-        logger.error(f"Server error: {str(e)}")
-        raise
+            raise Exception("Failed to start server")
+        yield 
     finally:
-        logger.info("Terminating test server...")
-        process.terminate()
+        # Kill the entire process group (parent + workers)
         try:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             process.wait(timeout=5)
-            logger.info("Test server terminated gracefully.")
-        except subprocess.TimeoutExpired:
-            logger.warning("Test server did not terminate in time; killing it.")
+        except Exception:
             process.kill()
 
 
