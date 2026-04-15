@@ -1,5 +1,9 @@
 # tests/conftest.py
 
+import os
+import sys
+import signal
+import pytest
 import subprocess
 import time
 import logging
@@ -252,7 +256,7 @@ class ServerStartupError(Exception):
 # ======================================================================================
 @pytest.fixture(scope="session")
 def fastapi_server():
-    server_url = 'http://127.0.0'
+    server_url = 'http://127.0.0.1:8000/'
     
     # 1. Use sys.executable to ensure the venv is used
     # 2. Use DEVNULL to prevent the pipe from filling up and hanging
